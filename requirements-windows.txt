@@ -1,0 +1,12 @@
+pyrogram>=2.0.0
+TgCrypto==1.2.2
+python-dotenv
+ffmpeg-python
+pymongo[srv]
+sqlalchemy
+python-magic-bin==0.4.14
+pillow
+pydub
+mutagen
+rarfile
+py7zr
