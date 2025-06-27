@@ -1,6 +1,14 @@
+from pyrogram import Client
 from pyrogram.types import Message
-from config import Config
 import time
+
+def human_readable_size(size: int) -> str:
+    """Convert bytes to human-readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024:
+            return f"{size:.2f} {unit}"
+        size /= 1024
+    return f"{size:.2f} PB"
 
 async def progress_callback(client: Client, message: Message, current: int, total: int, action: str):
     """Progress callback for uploads and processing"""
@@ -23,11 +31,3 @@ async def progress_callback(client: Client, message: Message, current: int, tota
         
         progress_callback.last_update = now
         progress_callback.last_percentage = percentage
-
-def human_readable_size(size: int) -> str:
-    """Convert bytes to human-readable format"""
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if size < 1024:
-            return f"{size:.2f} {unit}"
-        size /= 1024
-    return f"{size:.2f} PB"
