@@ -5,9 +5,9 @@ load_dotenv(".env")
 
 class Config:
     # Telegram API credentials
-    API_ID = int(os.getenv("API_ID", 0))
-    API_HASH = os.getenv("API_HASH", "")
-    BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+    API_ID = int(os.getenv("API_ID", "25331263"))
+    API_HASH = os.getenv("API_HASH", "cab85305bf85125a2ac053210bcd1030")
+    BOT_TOKEN = os.getenv("BOT_TOKEN", "7368321164:AAFKX0Dl1vEQVfuX4HZ5wIkYbuD174Syp-I")
     
     # Database configuration
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/database.db")
