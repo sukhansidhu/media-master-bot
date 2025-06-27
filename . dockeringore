@@ -1,65 +1,15 @@
-# .dockerignore
-
-# Ignore version control
 .git/
 .gitignore
-
-# Ignore environment files (should be passed as build args/secrets)
 .env
 .env.*
-
-# Ignore local data directories
 data/
-temp/
-downloads/
-output/
-
-# Ignore logs and databases
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.idea/
+.vscode/
 *.log
 *.sqlite
 *.db
-
-# Ignore Python cache and bytecode
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Ignore IDE configurations
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Ignore OS metadata
-.DS_Store
-Thumbs.db
-
-# Ignore build artifacts
-dist/
-build/
-*.egg-info/
-*.spec
-
-# Ignore documentation files
-docs/
-*.md
-
-# Ignore test files
-tests/
-test_*.py
-
-# Ignore Docker-related files (except Dockerfile)
-docker-compose.yml
-docker-compose.*.yml
-.dockerignore
-
-# Ignore large media files
-*.mp4
-*.mkv
-*.avi
-*.mov
-*.wav
-*.mp3
-*.zip
-*.rar
-*.7z
