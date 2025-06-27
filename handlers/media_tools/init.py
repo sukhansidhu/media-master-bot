@@ -11,7 +11,7 @@ from .renamer import renamer_handler
 from .media_info import media_info_handler
 from .archiver import archiver_handler
 
-def get_media_handlers():
+def media_handlers():
     """Return all media tools handlers as a flat list"""
     handlers = []
     handlers.extend(caption_editor_handler())
