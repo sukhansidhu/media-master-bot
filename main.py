@@ -1,14 +1,14 @@
 import os
 import logging
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, InlineKeyboardMarkup
 from config import Config
 from handlers.start import start_handler
 from handlers.settings import settings_handler
 from handlers.admin import admin_handler
 from handlers.progress import progress_handler
 from handlers.utilities import utilities_handler
-from handlers.media_tools import media_tools_handler
+from handlers.media_tools import get_media_handlers  # Changed import
 from utils.db import Database
 from utils.buttons import get_media_options
 
@@ -36,14 +36,17 @@ app.add_handler(settings_handler)
 app.add_handler(admin_handler)
 app.add_handler(progress_handler)
 app.add_handler(utilities_handler)
-app.add_handler(media_tools_handler)
+
+# Register media tools handlers
+for handler in get_media_handlers():  # Now properly iterating through handlers
+    app.add_handler(handler)
 
 @app.on_message(filters.document | filters.video | filters.audio)
 async def handle_media(client: Client, message: Message):
     """Handle incoming media files and show processing options"""
     user_id = message.from_user.id
     
-    # Check if user is premium (if you implement premium features)
+    # Check if user is premium
     is_premium = await db.is_premium_user(user_id)
     
     # Get appropriate buttons based on media type
