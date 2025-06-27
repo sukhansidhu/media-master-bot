@@ -1,15 +1,13 @@
+# For Linux/Docker deployments
 pyrogram>=2.0.0
 TgCrypto==1.2.2
 python-dotenv
 ffmpeg-python
 pymongo[srv]  # if using MongoDB
 sqlalchemy  # if using SQLite
-python-magic
+python-magic  # Linux compatible version
 pillow
 pydub
 mutagen
 rarfile
 py7zr
-# Add these to requirements.txt if not present
-py7zr==0.20.7
-python-magic-bin==0.4.14  # For Windows compatibility
