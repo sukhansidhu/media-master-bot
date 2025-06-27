@@ -11,19 +11,18 @@ from .renamer import renamer_handler
 from .media_info import media_info_handler
 from .archiver import archiver_handler
 
-def media_tools_handlers():
-    """Return all media tools handlers as a flat list"""
-    handlers = []
-    handlers.extend(caption_editor_handler())
-    handlers.extend(metadata_editor_handler())
-    handlers.extend(forwarder_handler())
-    handlers.extend(stream_tools_handler())
-    handlers.extend(video_trimmer_handler())
-    handlers.extend(video_merger_handler())
-    handlers.extend(audio_tools_handler())
-    handlers.extend(screenshot_handler())
-    handlers.extend(converter_handler())
-    handlers.extend(renamer_handler())
-    handlers.extend(media_info_handler())
-    handlers.extend(archiver_handler())
-    return handlers
+# Create a list of all handler functions
+media_handlers = [
+    caption_editor_handler(),
+    metadata_editor_handler(),
+    forwarder_handler(),
+    stream_tools_handler(),
+    video_trimmer_handler(),
+    video_merger_handler(),
+    audio_tools_handler(),
+    screenshot_handler(),
+    converter_handler(),
+    renamer_handler(),
+    media_info_handler(),
+    archiver_handler()
+]
