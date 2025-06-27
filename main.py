@@ -8,10 +8,10 @@ from handlers.settings import settings_handler
 from handlers.admin import admin_handler
 from handlers.progress import progress_handler
 from handlers.utilities import utilities_handler
-from handlers.media_tools import get_media_handlers
+from handlers.media_tools import media_handlers  # Import the list directly
 from utils.db import Database
 from utils.buttons import get_media_options
-from utils.progress import progress_callback  # Import directly here
+from utils.progress import progress_callback
 
 # Initialize logger
 logging.basicConfig(
@@ -39,7 +39,7 @@ app.add_handler(progress_handler)
 app.add_handler(utilities_handler)
 
 # Register media tools handlers
-for handler in get_media_handlers():
+for handler in media_handlers:  # Use the imported list directly
     app.add_handler(handler)
 
 @app.on_message(filters.document | filters.video | filters.audio)
