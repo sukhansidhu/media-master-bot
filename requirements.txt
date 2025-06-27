@@ -1,11 +1,10 @@
-# For Linux/Docker deployments
 pyrogram>=2.0.0
 TgCrypto==1.2.2
 python-dotenv
 ffmpeg-python
-pymongo[srv]  # if using MongoDB
-sqlalchemy  # if using SQLite
-python-magic  # Linux compatible version
+pymongo[srv]
+sqlalchemy
+python-magic
 pillow
 pydub
 mutagen
