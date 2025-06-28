@@ -159,4 +159,4 @@ def screenshot_handler():
     return [
         CallbackQueryHandler(screenshot_callback, filters.regex("^screenshot_")),
         MessageHandler(screenshot_message, filters.text & filters.private & ~filters.command)
-                ]
+    ]
