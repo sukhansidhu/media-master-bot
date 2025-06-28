@@ -10,7 +10,7 @@ from handlers.progress import progress_handler
 from handlers.utilities import utilities_handler
 from handlers.media_tools import media_handlers  # Import the list directly
 from utils.db import Database
-from utils.buttons import get_media_options
+from utils.buttons import media_tools_options
 from utils.progress import progress_callback
 
 # Initialize logger
