@@ -1,7 +1,7 @@
 import os
 import asyncio
 import ffmpeg
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Dict
 from config import Config
 
 async def run_ffmpeg_command(input_path: str, output_path: str, command: List[str], 
@@ -143,8 +143,16 @@ async def convert_media(input_path: str, output_path: str, target_format: str,
     command.append(output_path)
     return await run_ffmpeg_command(input_path, output_path, command, progress_callback)
 
-async def cancel_ffmpeg_process(user_id: int, task_id: str) -> bool:
-    """Cancel an ongoing FFmpeg process"""
-    # In a real implementation, you'd track processes by user and task ID
-    # and terminate them if requested
-    return False  # Placeholder
+async def edit_metadata(input_path: str, output_path: str, metadata: Dict[str, str], progress_callback: Optional[Callable] = None) -> bool:
+    """Edit media metadata"""
+    command = [
+        "-i", input_path,
+        "-c", "copy",  # Copy without re-encoding
+    ]
+    
+    for key, value in metadata.items():
+        command.extend(["-metadata", f"{key}={value}"])
+    
+    command.append(output_path)
+    
+    return await run_ffmpeg_command(input_path, output_path, command, progress_callback)
