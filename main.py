@@ -38,19 +38,18 @@ try:
     from handlers.media_tools.video_trimmer import handlers as video_trimmer_handlers
     
     # Combine all media handlers into one list
-    media_handlers = (
-        audio_handlers +
-        caption_handlers +
-        converter_handlers +
-        forwarder_handlers +
-        media_info_handlers +
-        metadata_handlers +
-        renamer_handlers +
-        screenshot_handlers +
-        stream_handlers +
-        video_merge_handlers +
-        video_trimmer_handlers
-    )
+    media_handlers = []
+    media_handlers.extend(audio_handlers)
+    media_handlers.extend(caption_handlers)
+    media_handlers.extend(converter_handlers)
+    media_handlers.extend(forwarder_handlers)
+    media_handlers.extend(media_info_handlers)
+    media_handlers.extend(metadata_handlers)
+    media_handlers.extend(renamer_handlers)
+    media_handlers.extend(screenshot_handlers)
+    media_handlers.extend(stream_handlers)
+    media_handlers.extend(video_merge_handlers)
+    media_handlers.extend(video_trimmer_handlers)
     
     logger.info("All handlers imported successfully")
 except ImportError as e:
