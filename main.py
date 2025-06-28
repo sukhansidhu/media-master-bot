@@ -24,32 +24,8 @@ try:
     from handlers.progress import progress_handler
     from handlers.utilities import utilities_handler
     
-    # Import media tools handlers from the media_tools subdirectory
-    from handlers.media_tools.audio_tools import handlers as audio_handlers
-    from handlers.media_tools.caption_editor import handlers as caption_handlers
-    from handlers.media_tools.converter import handlers as converter_handlers
-    from handlers.media_tools.forwarder import handlers as forwarder_handlers
-    from handlers.media_tools.media_info import handlers as media_info_handlers
-    from handlers.media_tools.metadata_editor import handlers as metadata_handlers
-    from handlers.media_tools.renamer import handlers as renamer_handlers
-    from handlers.media_tools.screenshot import handlers as screenshot_handlers
-    from handlers.media_tools.stream_tools import handlers as stream_handlers
-    from handlers.media_tools.video_merge import handlers as video_merge_handlers
-    from handlers.media_tools.video_trimmer import handlers as video_trimmer_handlers
-    
-    # Combine all media handlers into one list
-    media_handlers = []
-    media_handlers.extend(audio_handlers)
-    media_handlers.extend(caption_handlers)
-    media_handlers.extend(converter_handlers)
-    media_handlers.extend(forwarder_handlers)
-    media_handlers.extend(media_info_handlers)
-    media_handlers.extend(metadata_handlers)
-    media_handlers.extend(renamer_handlers)
-    media_handlers.extend(screenshot_handlers)
-    media_handlers.extend(stream_handlers)
-    media_handlers.extend(video_merge_handlers)
-    media_handlers.extend(video_trimmer_handlers)
+    # Import the combined media handlers list
+    from handlers.media_tools import media_handlers
     
     logger.info("All handlers imported successfully")
 except ImportError as e:
