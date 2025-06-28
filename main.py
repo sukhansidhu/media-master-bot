@@ -24,18 +24,18 @@ try:
     from handlers.progress import progress_handler
     from handlers.utilities import utilities_handler
     
-    # Import all media handlers directly
-    from handlers.audio_tools import handlers as audio_handlers
-    from handlers.caption_editor import handlers as caption_handlers
-    from handlers.converter import handlers as converter_handlers
-    from handlers.forwarder import handlers as forwarder_handlers
-    from handlers.media_info import handlers as media_info_handlers
-    from handlers.metadata_editor import handlers as metadata_handlers
-    from handlers.renamer import handlers as renamer_handlers
-    from handlers.screenshot import handlers as screenshot_handlers
-    from handlers.stream_tools import handlers as stream_handlers
-    from handlers.video_merge import handlers as video_merge_handlers
-    from handlers.video_trimmer import handlers as video_trimmer_handlers
+    # Import media tools handlers from the media_tools subdirectory
+    from handlers.media_tools.audio_tools import handlers as audio_handlers
+    from handlers.media_tools.caption_editor import handlers as caption_handlers
+    from handlers.media_tools.converter import handlers as converter_handlers
+    from handlers.media_tools.forwarder import handlers as forwarder_handlers
+    from handlers.media_tools.media_info import handlers as media_info_handlers
+    from handlers.media_tools.metadata_editor import handlers as metadata_handlers
+    from handlers.media_tools.renamer import handlers as renamer_handlers
+    from handlers.media_tools.screenshot import handlers as screenshot_handlers
+    from handlers.media_tools.stream_tools import handlers as stream_handlers
+    from handlers.media_tools.video_merge import handlers as video_merge_handlers
+    from handlers.media_tools.video_trimmer import handlers as video_trimmer_handlers
     
     # Combine all media handlers into one list
     media_handlers = (
