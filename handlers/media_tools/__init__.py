@@ -13,16 +13,17 @@ from .archiver import archiver_handler
 
 # Create a flat list of all handlers
 media_handlers = []
-media_handlers.extend(caption_editor_handler())
-media_handlers.extend(metadata_editor_handler())
-media_handlers.extend(forwarder_handler())
-media_handlers.extend(stream_tools_handler())
-media_handlers.extend(video_trimmer_handler())
-media_handlers.extend(video_merger_handler())
-media_handlers.extend(audio_tools_handler())
-media_handlers.extend(screenshot_handler())
-media_handlers.extend(converter_handler())
-media_handlers.extend(renamer_handler())
-media_handlers.extend(media_info_handler())
-media_handlers.extend(archiver_handler())
 
+# Wrap each handler function call in a list
+media_handlers.extend([caption_editor_handler()])
+media_handlers.extend([metadata_editor_handler()])
+media_handlers.extend([forwarder_handler()])
+media_handlers.extend([stream_tools_handler()])
+media_handlers.extend([video_trimmer_handler()])
+media_handlers.extend([video_merger_handler()])
+media_handlers.extend([audio_tools_handler()])
+media_handlers.extend([screenshot_handler()])
+media_handlers.extend([converter_handler()])
+media_handlers.extend([renamer_handler()])
+media_handlers.extend([media_info_handler()])
+media_handlers.extend([archiver_handler()])
