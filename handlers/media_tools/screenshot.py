@@ -97,6 +97,10 @@ async def screenshot_message(client, message: Message):
     if not temp_data:
         return
     
+    # Skip command messages
+    if message.text.startswith('/'):
+        return
+    
     media_message_id = temp_data.get("media_message_id")
     media_message = await client.get_messages(message.chat.id, media_message_id)
     
@@ -159,4 +163,4 @@ def screenshot_handler():
     return [
         CallbackQueryHandler(screenshot_callback, filters.regex("^screenshot_")),
         MessageHandler(screenshot_message, filters.text & filters.private)
-    ]
+            ]
