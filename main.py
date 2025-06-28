@@ -23,7 +23,6 @@ try:
     from handlers.admin import admin_handler
     from handlers.progress import progress_handler
     from handlers.utilities import utilities_handler
-    from handlers.media_tools import media_handlers
     
     logger.info("All handlers imported successfully")
 except ImportError as e:
