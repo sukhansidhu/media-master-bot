@@ -1,3 +1,4 @@
+    ]
 import os
 import re
 import logging
@@ -136,4 +137,4 @@ def video_trimmer_handler():
             filters.text & filters.private & (~filters.regex(r"^/")),
             video_trimmer_message
         )
-    ]
+        ]
