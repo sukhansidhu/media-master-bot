@@ -1,5 +1,6 @@
 import logging
 import traceback
+from pyrogram.handlers import CallbackQueryHandler, MessageHandler
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +12,15 @@ def safe_extend_handler(handler_func, handler_list):
         
         result = handler_func()
         
-        # If it's a single handler, wrap it in a list
-        if hasattr(result, '_handler'):
-            result = [result]
-        elif not isinstance(result, list):
-            raise ValueError("Handler function must return a list or single handler")
-            
-        handler_list.extend(result)
-        logger.info(f"Added {len(result)} handlers from {handler_func.__module__}")
+        # Handle different return types
+        if result is None:
+            return
+        elif isinstance(result, (CallbackQueryHandler, MessageHandler)):
+            handler_list.append(result)
+        elif isinstance(result, list):
+            handler_list.extend(result)
+        else:
+            logger.error(f"Invalid handler type from {handler_func.__module__}: {type(result)}")
     except Exception as e:
         logger.error(f"Error in {handler_func.__module__}: {e}")
         logger.error(traceback.format_exc())
