@@ -1,11 +1,7 @@
-import os
 from pyrogram import filters
-from pyrogram.types import Message, CallbackQuery
-from pyrogram.handlers import MessageHandler, CallbackQueryHandler
+from pyrogram.types import CallbackQuery
+from pyrogram.handlers import CallbackQueryHandler
 from utils.ffmpeg import cancel_ffmpeg_process
-from utils.db import Database
-
-db = Database()
 
 async def cancel_processing(client, callback_query: CallbackQuery):
     """Handle cancel processing request"""
@@ -13,7 +9,7 @@ async def cancel_processing(client, callback_query: CallbackQuery):
     task_id = callback_query.data.split("_")[-1]
     
     # Cancel the FFmpeg process
-    success = await cancel_ffmpeg_process(user_id, task_id)
+    success = await cancel_ffmpeg_process(task_id)
     
     if success:
         await callback_query.answer("Processing cancelled!")
