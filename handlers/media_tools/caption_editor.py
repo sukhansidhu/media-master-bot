@@ -1,5 +1,5 @@
 from pyrogram import filters
-from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from pyrogram.handlers import MessageHandler, CallbackQueryHandler
 from utils.buttons import back_button
 from utils.db import Database
@@ -55,5 +55,5 @@ async def caption_editor_message(client, message: Message):
 def caption_editor_handler():
     return [
         CallbackQueryHandler(caption_editor_callback, filters.regex("^caption_editor_")),
-        MessageHandler(caption_editor_message, filters.text & filters.private & ~filters.command)
+        MessageHandler(caption_editor_message, filters.text & filters.private & ~filters.command())
     ]
