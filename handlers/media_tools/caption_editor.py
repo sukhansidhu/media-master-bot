@@ -55,5 +55,5 @@ async def caption_editor_message(client, message: Message):
 def caption_editor_handler():
     return [
         CallbackQueryHandler(caption_editor_callback, filters.regex("^caption_editor_")),
-        MessageHandler(caption_editor_message, filters.text & filters.private & ~filters.command)
+        MessageHandler(caption_editor_message, filters.text & filters.private)
     ]
