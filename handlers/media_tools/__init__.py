@@ -2,20 +2,80 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Import handler functions
+# Import all handler functions with error handling
+handler_functions = []
+
 try:
     from .caption_editor import caption_editor_handler
+    handler_functions.append(caption_editor_handler)
 except ImportError as e:
     logger.error(f"Couldn't import caption_editor: {e}")
-    caption_editor_handler = None
 
 try:
     from .metadata_editor import metadata_editor_handler
+    handler_functions.append(metadata_editor_handler)
 except ImportError as e:
     logger.error(f"Couldn't import metadata_editor: {e}")
-    metadata_editor_handler = None
 
-# Repeat this pattern for all other handlers...
+try:
+    from .forwarder import forwarder_handler
+    handler_functions.append(forwarder_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import forwarder: {e}")
+
+try:
+    from .stream_tools import stream_tools_handler
+    handler_functions.append(stream_tools_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import stream_tools: {e}")
+
+try:
+    from .video_trimmer import video_trimmer_handler
+    handler_functions.append(video_trimmer_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import video_trimmer: {e}")
+
+try:
+    from .video_merger import video_merger_handler
+    handler_functions.append(video_merger_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import video_merger: {e}")
+
+try:
+    from .audio_tools import audio_tools_handler
+    handler_functions.append(audio_tools_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import audio_tools: {e}")
+
+try:
+    from .screenshot import screenshot_handler
+    handler_functions.append(screenshot_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import screenshot: {e}")
+
+try:
+    from .converter import converter_handler
+    handler_functions.append(converter_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import converter: {e}")
+
+try:
+    from .renamer import renamer_handler
+    handler_functions.append(renamer_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import renamer: {e}")
+
+try:
+    from .media_info import media_info_handler
+    handler_functions.append(media_info_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import media_info: {e}")
+
+try:
+    from .archiver import archiver_handler
+    handler_functions.append(archiver_handler)
+except ImportError as e:
+    logger.error(f"Couldn't import archiver: {e}")
 
 # Create a flat list of all handlers
 media_handlers = []
@@ -33,21 +93,12 @@ def add_handler(handler_func):
             result = [result]
             
         media_handlers.extend(result)
+        logger.info(f"Added {len(result)} handlers from {handler_func.__name__}")
     except Exception as e:
-        logger.error(f"Error in handler function: {e}")
+        logger.error(f"Error in handler function {handler_func.__name__}: {e}")
 
 # Add all handlers using the safe method
-add_handler(caption_editor_handler)
-add_handler(metadata_editor_handler)
-add_handler(forwarder_handler)
-add_handler(stream_tools_handler)
-add_handler(video_trimmer_handler)
-add_handler(video_merger_handler)
-add_handler(audio_tools_handler)
-add_handler(screenshot_handler)
-add_handler(converter_handler)
-add_handler(renamer_handler)
-add_handler(media_info_handler)
-add_handler(archiver_handler)
+for handler_func in handler_functions:
+    add_handler(handler_func)
 
 logger.info(f"Total media handlers loaded: {len(media_handlers)}")
