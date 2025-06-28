@@ -117,13 +117,28 @@ async def handle_media(client: Client, message: Message):
         logger.error(traceback.format_exc())
 
 # Debug handler to log callback queries
+# Add this to your existing main.py, right before app.run()
+
 @app.on_callback_query()
-async def debug_callback(client, callback_query):
+async def handle_all_callbacks(client, callback_query):
+    """Global callback handler for debugging"""
     try:
         logger.info(f"Callback received: {callback_query.data} from {callback_query.from_user.id}")
-        await callback_query.answer("Processing...")
+        
+        # Check if any handler processed this callback
+        processed = False
+        for handler in app.dispatcher.handlers[1]:  # Callback query handlers
+            if await handler.check(client, callback_query):
+                processed = True
+                break
+                
+        if not processed:
+            await callback_query.answer("⚠️ No handler found for this action", show_alert=True)
+            logger.warning(f"No handler found for callback: {callback_query.data}")
+            
     except Exception as e:
-        logger.error(f"Error in debug_callback: {e}")
+        logger.error(f"Error in global callback handler: {e}")
+        await callback_query.answer("❌ An error occurred", show_alert=True)
 
 if __name__ == "__main__":
     # Create data directory if not exists
