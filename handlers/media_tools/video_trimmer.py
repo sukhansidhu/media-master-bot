@@ -1,3 +1,4 @@
+import os
 from pyrogram import filters
 from pyrogram.types import CallbackQuery, Message
 from pyrogram.handlers import CallbackQueryHandler, MessageHandler
@@ -82,11 +83,13 @@ async def video_trimmer_message(client, message: Message):
             output_path,
             start_time,
             end_time,
-            lambda current, total: progress_callback(
+            lambda current, total, progress, elapsed: progress_callback(
                 client,
                 message,
                 current,
                 total,
+                progress,
+                elapsed,
                 "Trimming video"
             )
         )
@@ -111,5 +114,5 @@ async def video_trimmer_message(client, message: Message):
 def video_trimmer_handler():
     return [
         CallbackQueryHandler(video_trimmer_callback, filters.regex("^video_trimmer_")),
-        MessageHandler(video_trimmer_message, filters.text & filters.private & ~filters.command)
-    ]
+        MessageHandler(video_trimmer_message, filters.text & filters.private & ~filters.command())
+        ]
