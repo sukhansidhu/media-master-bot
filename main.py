@@ -24,14 +24,14 @@ try:
     from handlers.progress import progress_handler
     from handlers.utilities import utilities_handler
     
-    # Import the combined media handlers list
+    # Import media tools handlers
     from handlers.media_tools import media_handlers
     
     logger.info("All handlers imported successfully")
 except ImportError as e:
     logger.error(f"Import error: {e}")
     logger.error(traceback.format_exc())
-    sys.exit(1)
+    media_handlers = []
 
 # Initialize Pyrogram client
 app = Client(
@@ -44,36 +44,45 @@ app = Client(
 # Initialize database
 db = Database()
 
-# Register handlers
+# Register core handlers
 try:
     app.add_handler(start_handler)
     app.add_handler(settings_handler)
     app.add_handler(admin_handler)
     app.add_handler(progress_handler)
     app.add_handler(utilities_handler)
-    
-    # Register all media tools handlers
-    for handler in media_handlers:
-        app.add_handler(handler)
-        
-    logger.info("All handlers registered successfully")
+    logger.info("Core handlers registered successfully")
 except Exception as e:
-    logger.error(f"Handler registration error: {e}")
+    logger.error(f"Core handler registration error: {e}")
     logger.error(traceback.format_exc())
-    sys.exit(1)
+
+# Register media tools handlers with robust error handling
+if media_handlers:
+    for handler in media_handlers:
+        try:
+            app.add_handler(handler)
+        except Exception as e:
+            logger.error(f"Failed to register media handler: {e}")
+            logger.error(traceback.format_exc())
+    logger.info(f"Registered {len(media_handlers)} media handlers")
+else:
+    logger.warning("No media handlers to register")
 
 @app.on_message(filters.document | filters.video | filters.audio)
 async def handle_media(client: Client, message: Message):
     """Handle incoming media files and show processing options"""
-    user_id = message.from_user.id
-    is_premium = False  # Placeholder
-    
-    buttons = get_media_options(message, is_premium)
-    
-    await message.reply_text(
-        "📁 **Media Received**\nSelect an action:",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+    try:
+        user_id = message.from_user.id
+        is_premium = False  # Placeholder
+        
+        buttons = get_media_options(message, is_premium)
+        
+        await message.reply_text(
+            "📁 **Media Received**\nSelect an action:",
+            reply_markup=InlineKeyboardMarkup(buttons)
+    except Exception as e:
+        logger.error(f"Error handling media: {e}")
+        logger.error(traceback.format_exc())
 
 if __name__ == "__main__":
     # Create data directory if not exists
