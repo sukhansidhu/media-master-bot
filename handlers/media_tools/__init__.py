@@ -1,118 +1,133 @@
-from pyrogram import filters
-from pyrogram.types import CallbackQuery, Message
-from pyrogram.handlers import CallbackQueryHandler, MessageHandler
-from utils.db import Database
-from utils.buttons import archive_markup, back_button
-import zipfile
-import os
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
-db = Database()
 
-async def archiver_callback(client, callback_query: CallbackQuery):
-    """Handle archiver callback"""
-    try:
-        user_id = callback_query.from_user.id
-        message = callback_query.message
-        media_message = message.reply_to_message
-        
-        if not media_message:
-            await callback_query.answer("Original message not found!")
-            return
-        
-        action = callback_query.data.split("_")[-1]
-        
-        if action == "options":
-            await callback_query.message.edit_text(
-                "🗄️ **Archive Creator**\n\n"
-                "Select archive format:",
-                reply_markup=archive_markup()
-            )
-        
-        elif action.startswith("format_"):
-            archive_format = action.split("_")[-1]
-            
-            # Download the file
-            file_path = await media_message.download()
-            archive_path = f"data/{user_id}_archive.{archive_format}"
-            
-            await callback_query.message.edit_text(f"🗜 Creating {archive_format.upper()} archive...")
-            
-            try:
-                if archive_format == "zip":
-                    with zipfile.ZipFile(archive_path, 'w') as zipf:
-                        zipf.write(file_path, os.path.basename(file_path))
-                
-                # Upload the archive
-                await client.send_document(
-                    chat_id=user_id,
-                    document=archive_path,
-                    caption=f"✅ {archive_format.upper()} archive created!",
-                    file_name=f"archive.{archive_format}"
-                )
-            except Exception as e:
-                await callback_query.message.edit_text(f"❌ Error: {e}")
-            finally:
-                # Clean up files
-                if os.path.exists(file_path):
-                    os.unlink(file_path)
-                if os.path.exists(archive_path):
-                    os.unlink(archive_path)
-    except Exception as e:
-        logger.error(f"Error in archiver_callback: {e}")
+# Create an empty list for media handlers
+media_handlers = []
 
-async def archive_password_callback(client, callback_query: CallbackQuery):
-    """Handle archive password input"""
-    try:
-        user_id = callback_query.from_user.id
-        await callback_query.message.edit_text(
-            "🔒 **Password Protected Archive**\n\n"
-            "Send me the password for the archive:",
-            reply_markup=back_button("archive_options")
-        )
-        
-        # Store the archive format for later reference
-        archive_format = callback_query.data.split("_")[-1]
-        await db.set_temp_data(user_id, "archive_password", {
-            "archive_format": archive_format
-        })
-    except Exception as e:
-        logger.error(f"Error in archive_password_callback: {e}")
+# Import handler functions with error handling
+try:
+    from .caption_editor import caption_editor_handler
+    media_handlers.extend(caption_editor_handler())
+    logger.info("Imported caption_editor_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import caption_editor: {e}")
+except Exception as e:
+    logger.error(f"Error in caption_editor_handler: {e}")
+    logger.error(traceback.format_exc())
 
-async def archive_password_message(client, message: Message):
-    """Handle archive password message"""
-    try:
-        user_id = message.from_user.id
-        temp_data = await db.get_temp_data(user_id, "archive_password")
-        
-        if not temp_data:
-            return
-        
-        password = message.text.strip()
-        archive_format = temp_data.get("archive_format")
-        
-        await message.reply_text(
-            "🔒 Password-protected archive created!\n"
-            f"Format: {archive_format.upper()}\n"
-            f"Password: {password}"
-        )
-        
-        # Clean up temp data
-        await db.delete_temp_data(user_id, "archive_password")
-    except Exception as e:
-        logger.error(f"Error in archive_password_message: {e}")
+try:
+    from .metadata_editor import metadata_editor_handler
+    media_handlers.extend(metadata_editor_handler())
+    logger.info("Imported metadata_editor_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import metadata_editor: {e}")
+except Exception as e:
+    logger.error(f"Error in metadata_editor_handler: {e}")
+    logger.error(traceback.format_exc())
 
-def archiver_handler():
-    try:
-        # Create a safe filter
-        password_filter = filters.text & filters.private
-        
-        return [
-            CallbackQueryHandler(archiver_callback, filters.regex(r"^archiver_")),
-            CallbackQueryHandler(archive_password_callback, filters.regex(r"^archive_password_")),
-            MessageHandler(archive_password_message, password_filter)
-        ]
-    except Exception as e:
-        logger.error(f"Error creating archiver_handler: {e}")
-        return []
+try:
+    from .forwarder import forwarder_handler
+    media_handlers.extend(forwarder_handler())
+    logger.info("Imported forwarder_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import forwarder: {e}")
+except Exception as e:
+    logger.error(f"Error in forwarder_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .stream_tools import stream_tools_handler
+    media_handlers.extend(stream_tools_handler())
+    logger.info("Imported stream_tools_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import stream_tools: {e}")
+except Exception as e:
+    logger.error(f"Error in stream_tools_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .video_trimmer import video_trimmer_handler
+    media_handlers.extend(video_trimmer_handler())
+    logger.info("Imported video_trimmer_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import video_trimmer: {e}")
+except Exception as e:
+    logger.error(f"Error in video_trimmer_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .video_merger import video_merger_handler
+    media_handlers.extend(video_merger_handler())
+    logger.info("Imported video_merger_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import video_merger: {e}")
+except Exception as e:
+    logger.error(f"Error in video_merger_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .audio_tools import audio_tools_handler
+    media_handlers.extend(audio_tools_handler())
+    logger.info("Imported audio_tools_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import audio_tools: {e}")
+except Exception as e:
+    logger.error(f"Error in audio_tools_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .screenshot import screenshot_handler
+    media_handlers.extend(screenshot_handler())
+    logger.info("Imported screenshot_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import screenshot: {e}")
+except Exception as e:
+    logger.error(f"Error in screenshot_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .converter import converter_handler
+    media_handlers.extend(converter_handler())
+    logger.info("Imported converter_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import converter: {e}")
+except Exception as e:
+    logger.error(f"Error in converter_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .renamer import renamer_handler
+    media_handlers.extend(renamer_handler())
+    logger.info("Imported renamer_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import renamer: {e}")
+except Exception as e:
+    logger.error(f"Error in renamer_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .media_info import media_info_handler
+    media_handlers.extend(media_info_handler())
+    logger.info("Imported media_info_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import media_info: {e}")
+except Exception as e:
+    logger.error(f"Error in media_info_handler: {e}")
+    logger.error(traceback.format_exc())
+
+try:
+    from .archiver import archiver_handler
+    media_handlers.extend(archiver_handler())
+    logger.info("Imported archiver_handler")
+except ImportError as e:
+    logger.error(f"Couldn't import archiver: {e}")
+except Exception as e:
+    logger.error(f"Error in archiver_handler: {e}")
+    logger.error(traceback.format_exc())
+
+logger.info(f"Total media handlers loaded: {len(media_handlers)}")
+
+# Export the media_handlers list
+__all__ = ['media_handlers']
