@@ -1,7 +1,8 @@
 import os
 import asyncio
 import ffmpeg
-from typing import List, Callable, Optional, Dict
+import time
+from typing import List, Callable, Optional, Dict, Tuple
 from config import Config
 
 # Global dictionary to track ongoing processes
@@ -25,6 +26,7 @@ async def run_ffmpeg_command(input_path: str, output_path: str, command: List[st
         
         # If progress callback is provided, track progress
         if progress_callback:
+            start_time = time.time()
             while True:
                 await asyncio.sleep(1)
                 if process.returncode is not None:
@@ -34,7 +36,12 @@ async def run_ffmpeg_command(input_path: str, output_path: str, command: List[st
                 if os.path.exists(output_path):
                     current_size = os.path.getsize(output_path)
                     total_size = os.path.getsize(input_path)
-                    progress_callback(current_size, total_size)
+                    elapsed = time.time() - start_time
+                    
+                    # Estimate total time and percentage
+                    if current_size > 0 and total_size > 0:
+                        progress = min(99, int((current_size / total_size) * 100))
+                        progress_callback(current_size, total_size, progress, elapsed)
         
         await process.wait()
         return process.returncode == 0
@@ -125,6 +132,28 @@ async def extract_audio(input_path: str, output_path: str,
     ]
     return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
 
+async def convert_audio(input_path: str, output_path: str, format: str, 
+                      bitrate: str = "192k",
+                      task_id: str = None,
+                      progress_callback: Optional[Callable] = None) -> bool:
+    """Convert audio to different format with quality control"""
+    codec_map = {
+        "mp3": "libmp3lame",
+        "wav": "pcm_s16le",
+        "flac": "flac",
+        "aac": "aac",
+        "ogg": "libvorbis"
+    }
+    
+    command = [
+        "-i", input_path,
+        "-vn",
+        "-acodec", codec_map.get(format, "copy"),
+        "-ab", bitrate,
+        output_path
+    ]
+    return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
+
 async def generate_screenshots(input_path: str, output_dir: str, count: int = 5,
                             timestamps: Optional[List[str]] = None,
                             task_id: str = None,
@@ -188,4 +217,50 @@ async def edit_metadata(input_path: str, output_path: str, metadata: Dict[str, s
     
     command.append(output_path)
     
+    return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
+
+async def adjust_audio_speed(input_path: str, output_path: str, speed_factor: float,
+                          task_id: str = None,
+                          progress_callback: Optional[Callable] = None) -> bool:
+    """Adjust audio speed without changing pitch"""
+    command = [
+        "-i", input_path,
+        "-filter:a", f"atempo={speed_factor}",
+        "-vn",
+        output_path
+    ]
+    return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
+
+async def adjust_audio_volume(input_path: str, output_path: str, volume_factor: float,
+                          task_id: str = None,
+                          progress_callback: Optional[Callable] = None) -> bool:
+    """Adjust audio volume"""
+    command = [
+        "-i", input_path,
+        "-filter:a", f"volume={volume_factor}",
+        "-vn",
+        output_path
+    ]
+    return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
+
+async def create_8d_audio(input_path: str, output_path: str,
+                       task_id: str = None,
+                       progress_callback: Optional[Callable] = None) -> bool:
+    """Create 8D audio effect"""
+    command = [
+        "-i", input_path,
+        "-af", "apulsator=hz=0.08",
+        output_path
+    ]
+    return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
+
+async def apply_bass_boost(input_path: str, output_path: str, boost_level: int,
+                        task_id: str = None,
+                        progress_callback: Optional[Callable] = None) -> bool:
+    """Apply bass boost to audio"""
+    command = [
+        "-i", input_path,
+        "-af", f"bass=g={boost_level}",
+        output_path
+    ]
     return await run_ffmpeg_command(input_path, output_path, command, task_id, progress_callback)
