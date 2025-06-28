@@ -42,6 +42,10 @@ async def caption_editor_message(client, message: Message):
         await message.reply_text("Original media message not found!")
         return
     
+    # Skip command messages
+    if message.text.startswith('/'):
+        return
+    
     # Edit the media message with new caption
     try:
         await media_message.edit_caption(message.text)
