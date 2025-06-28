@@ -113,6 +113,6 @@ async def video_trimmer_message(client, message: Message):
 
 def video_trimmer_handler():
     return [
-    CallbackQueryHandler(video_trimmer_callback, filters.regex("^video_trimmer_")),
-    MessageHandler(video_trimmer_message, filters.text & filters.private & filters.create(lambda _, m: m.command is None))
+        CallbackQueryHandler(video_trimmer_callback, filters.regex("^video_trimmer_")),
+        MessageHandler(video_trimmer_message, filters.text & filters.private & ~filters.command)
     ]
