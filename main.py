@@ -77,9 +77,11 @@ async def handle_media(client: Client, message: Message):
         
         buttons = get_media_options(message, is_premium)
         
+        # FIXED: Properly closed parentheses
         await message.reply_text(
             "📁 **Media Received**\nSelect an action:",
             reply_markup=InlineKeyboardMarkup(buttons)
+        )
     except Exception as e:
         logger.error(f"Error handling media: {e}")
         logger.error(traceback.format_exc())
