@@ -1,3 +1,4 @@
+import os
 from pyrogram import filters
 from pyrogram.types import CallbackQuery, Message
 from pyrogram.handlers import CallbackQueryHandler, MessageHandler
@@ -52,11 +53,13 @@ async def video_merger_message(client, message: Message):
         await merge_videos(
             [video1_path, video2_path],
             output_path,
-            lambda current, total: progress_callback(
+            lambda current, total, progress, elapsed: progress_callback(
                 client,
                 message,
                 current,
                 total,
+                progress,
+                elapsed,
                 "Merging videos"
             )
         )
