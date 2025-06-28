@@ -82,26 +82,32 @@ async def test_command(client: Client, message: Message):
 async def handle_media(client: Client, message: Message):
     """Handle incoming media files and show processing options"""
     try:
-        logger.info(f"Received media from {message.from_user.id}")
+        logger.info(f"Received media from {message.from_user.id} ({message.from_user.first_name})")
+        logger.info(f"Media type: {message.media}")
+        logger.info(f"File name: {message.document.file_name if message.document else 'N/A'}")
+        
         user_id = message.from_user.id
-        is_premium = False  # Placeholder
+        is_premium = False
         
         buttons = get_media_options(message, is_premium)
         
-        await message.reply_text(
+        response = await message.reply_text(
             "📁 **Media Received**\nSelect an action:",
             reply_markup=InlineKeyboardMarkup(buttons)
         )
-        logger.info("Media options sent successfully")
+        
+        logger.info(f"Media options sent successfully (message ID: {response.id})")
     except Exception as e:
         logger.error(f"Error handling media: {e}")
         logger.error(traceback.format_exc())
 
-# Handler to log when bot is ready
-@app.on_message(filters.command("start"))
-async def start_command(client: Client, message: Message):
-    logger.info(f"Bot is ready! User {message.from_user.id} started the bot")
-    await start_handler(client, message)  # Call your existing start handler
+# Additional debug handler
+@app.on_message(filters.all)
+async def debug_handler(client: Client, message: Message):
+    if message.from_user:
+        logger.debug(f"Received message from {message.from_user.id}: {message.text or message.caption or 'Media message'}")
+    else:
+        logger.debug(f"Received system message")
 
 if __name__ == "__main__":
     # Create data directory if not exists
