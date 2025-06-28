@@ -93,6 +93,6 @@ async def renamer_message(client, message: Message):
 
 def renamer_handler():
     return [
-        CallbackQueryHandler(renamer_callback, filters.regex("^renamer_")),
-        MessageHandler(renamer_message, filters.text & filters.private & ~filters.command())
-    ]
+    CallbackQueryHandler(renamer_callback, filters.regex("^renamer_")),
+    MessageHandler(renamer_message, filters.text & filters.private & filters.create(lambda _, m: m.command is None))
+]
