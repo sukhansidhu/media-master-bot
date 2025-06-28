@@ -56,11 +56,12 @@ except Exception as e:
     logger.error(f"Core handler registration error: {e}")
     logger.error(traceback.format_exc())
 
-# Register media tools handlers with robust error handling
+# Register media tools handlers
 if media_handlers:
     for handler in media_handlers:
         try:
             app.add_handler(handler)
+            logger.debug(f"Registered handler: {type(handler).__name__}")
         except Exception as e:
             logger.error(f"Failed to register media handler: {e}")
             logger.error(traceback.format_exc())
@@ -77,7 +78,6 @@ async def handle_media(client: Client, message: Message):
         
         buttons = get_media_options(message, is_premium)
         
-        # FIXED: Properly closed parentheses
         await message.reply_text(
             "📁 **Media Received**\nSelect an action:",
             reply_markup=InlineKeyboardMarkup(buttons)
