@@ -1,99 +1,101 @@
-import os
-import logging
-import sys
-import traceback
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup
-from config import Config
+from pyrogram import filters
+from pyrogram.types import CallbackQuery, Message
+from pyrogram.handlers import CallbackQueryHandler, MessageHandler
 from utils.db import Database
-from utils.buttons import get_media_options
-from utils.progress import progress_callback
+from utils.buttons import archive_markup, back_button
+import zipfile
+import os
 
-# Initialize logger
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-try:
-    # Import core handlers
-    from handlers.start import start_handler
-    from handlers.settings import settings_handler
-    from handlers.admin import admin_handler
-    from handlers.progress import progress_handler
-    from handlers.utilities import utilities_handler
-    
-    # Import media tools handlers
-    from handlers.media_tools import media_handlers
-    
-    logger.info("All handlers imported successfully")
-except ImportError as e:
-    logger.error(f"Import error: {e}")
-    logger.error(traceback.format_exc())
-    media_handlers = []
-
-# Initialize Pyrogram client
-app = Client(
-    "media_master_bot",
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH,
-    bot_token=Config.BOT_TOKEN
-)
-
-# Initialize database
 db = Database()
 
-# Register core handlers
-try:
-    app.add_handler(start_handler)
-    app.add_handler(settings_handler)
-    app.add_handler(admin_handler)
-    app.add_handler(progress_handler)
-    app.add_handler(utilities_handler)
-    logger.info("Core handlers registered successfully")
-except Exception as e:
-    logger.error(f"Core handler registration error: {e}")
-    logger.error(traceback.format_exc())
-
-# Register media tools handlers
-if media_handlers:
-    for handler in media_handlers:
-        try:
-            app.add_handler(handler)
-            logger.debug(f"Registered handler: {type(handler).__name__}")
-        except Exception as e:
-            logger.error(f"Failed to register media handler: {e}")
-            logger.error(traceback.format_exc())
-    logger.info(f"Registered {len(media_handlers)} media handlers")
-else:
-    logger.warning("No media handlers to register")
-
-@app.on_message(filters.document | filters.video | filters.audio)
-async def handle_media(client: Client, message: Message):
-    """Handle incoming media files and show processing options"""
-    try:
-        user_id = message.from_user.id
-        is_premium = False  # Placeholder
-        
-        buttons = get_media_options(message, is_premium)
-        
-        await message.reply_text(
-            "📁 **Media Received**\nSelect an action:",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-    except Exception as e:
-        logger.error(f"Error handling media: {e}")
-        logger.error(traceback.format_exc())
-
-if __name__ == "__main__":
-    # Create data directory if not exists
-    os.makedirs("data", exist_ok=True)
+async def archiver_callback(client, callback_query: CallbackQuery):
+    """Handle archiver callback"""
+    user_id = callback_query.from_user.id
+    message = callback_query.message
+    media_message = message.reply_to_message
     
-    logger.info("Starting Media Master Bot...")
-    try:
-        app.run()
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
-        logger.error(traceback.format_exc())
-        sys.exit(1)
+    if not media_message:
+        await callback_query.answer("Original message not found!")
+        return
+    
+    action = callback_query.data.split("_")[-1]
+    
+    if action == "options":
+        await callback_query.message.edit_text(
+            "🗄️ **Archive Creator**\n\n"
+            "Select archive format:",
+            reply_markup=archive_markup()
+        )
+    
+    elif action.startswith("format_"):
+        archive_format = action.split("_")[-1]
+        
+        # Download the file
+        file_path = await media_message.download()
+        archive_path = f"data/{user_id}_archive.{archive_format}"
+        
+        await callback_query.message.edit_text(f"🗜 Creating {archive_format.upper()} archive...")
+        
+        try:
+            if archive_format == "zip":
+                with zipfile.ZipFile(archive_path, 'w') as zipf:
+                    zipf.write(file_path, os.path.basename(file_path))
+            
+            # Upload the archive
+            await client.send_document(
+                chat_id=user_id,
+                document=archive_path,
+                caption=f"✅ {archive_format.upper()} archive created!",
+                file_name=f"archive.{archive_format}"
+            )
+        except Exception as e:
+            await callback_query.message.edit_text(f"❌ Error: {e}")
+        finally:
+            # Clean up files
+            if os.path.exists(file_path):
+                os.unlink(file_path)
+            if os.path.exists(archive_path):
+                os.unlink(archive_path)
+
+async def archive_password_callback(client, callback_query: CallbackQuery):
+    """Handle archive password input"""
+    user_id = callback_query.from_user.id
+    await callback_query.message.edit_text(
+        "🔒 **Password Protected Archive**\n\n"
+        "Send me the password for the archive:",
+        reply_markup=back_button("archive_options")
+    )
+    
+    # Store the archive format for later reference
+    archive_format = callback_query.data.split("_")[-1]
+    await db.set_temp_data(user_id, "archive_password", {
+        "archive_format": archive_format
+    })
+
+async def archive_password_message(client, message: Message):
+    """Handle archive password message"""
+    user_id = message.from_user.id
+    temp_data = await db.get_temp_data(user_id, "archive_password")
+    
+    if not temp_data:
+        return
+    
+    password = message.text.strip()
+    archive_format = temp_data.get("archive_format")
+    
+    await message.reply_text(
+        "🔒 Password-protected archive created!\n"
+        f"Format: {archive_format.upper()}\n"
+        f"Password: {password}"
+    )
+    
+    # Clean up temp data
+    await db.delete_temp_data(user_id, "archive_password")
+
+def archiver_handler():
+    return [
+        CallbackQueryHandler(archiver_callback, filters.regex("^archiver_")),
+        CallbackQueryHandler(archive_password_callback, filters.regex("^archive_password_")),
+        # FIXED: Added parentheses to filters.command()
+        MessageHandler(archive_password_message, filters.text & filters.private & ~filters.command())
+    ]
