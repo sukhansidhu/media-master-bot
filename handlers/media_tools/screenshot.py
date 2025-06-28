@@ -1,11 +1,14 @@
+import os
+import logging
 from pyrogram import filters
-from pyrogram.types import CallbackQuery, Message
+from pyrogram.types import CallbackQuery, Message, InputMediaPhoto
 from pyrogram.handlers import CallbackQueryHandler, MessageHandler
 from utils.ffmpeg import generate_screenshots
 from utils.progress import progress_callback
 from utils.db import Database
 from utils.buttons import back_button
 
+logger = logging.getLogger(__name__)
 db = Database()
 
 async def screenshot_callback(client, callback_query: CallbackQuery):
@@ -33,11 +36,13 @@ async def screenshot_callback(client, callback_query: CallbackQuery):
                 file_path,
                 output_dir,
                 count=5,  # Generate 5 screenshots
-                lambda current, total: progress_callback(
+                progress_callback=lambda current, total, progress, elapsed: progress_callback(
                     client,
                     callback_query.message,
                     current,
                     total,
+                    progress,
+                    elapsed,
                     "Generating screenshots"
                 )
             )
@@ -45,25 +50,32 @@ async def screenshot_callback(client, callback_query: CallbackQuery):
             # Send the screenshots
             media_group = []
             for i, path in enumerate(screenshot_paths):
-                media_group.append(InputMediaPhoto(
-                    media=path,
-                    caption=f"Screenshot {i+1}" if i == 0 else ""
-                ))
+                if i == 0:
+                    media_group.append(InputMediaPhoto(
+                        media=path,
+                        caption="✅ Screenshots generated"
+                    ))
+                else:
+                    media_group.append(InputMediaPhoto(media=path))
             
             await client.send_media_group(
                 chat_id=user_id,
                 media=media_group
             )
             
-            await callback_query.message.reply_text("✅ Screenshots generated successfully!")
+            await callback_query.message.delete()
         except Exception as e:
-            await callback_query.message.edit_text(f"❌ Error: {e}")
+            logger.error(f"Screenshot error: {e}")
+            await callback_query.message.edit_text(f"❌ Error: {str(e)}")
         finally:
             # Clean up files
-            os.unlink(file_path)
+            if os.path.exists(file_path):
+                os.unlink(file_path)
             for path in screenshot_paths:
-                os.unlink(path)
-            os.rmdir(output_dir)
+                if os.path.exists(path):
+                    os.unlink(path)
+            if os.path.exists(output_dir):
+                os.rmdir(output_dir)
     
     elif action == "manual":
         await callback_query.message.edit_text(
@@ -106,27 +118,33 @@ async def screenshot_message(client, message: Message):
         await message.reply_text("📸 Taking screenshot...")
         
         # Generate screenshot at specific timestamp
-        screenshot_path = await generate_screenshots(
+        screenshot_paths = await generate_screenshots(
             file_path,
             output_path,
             timestamps=[timestamp],
-            progress_callback=lambda current, total: progress_callback(
+            progress_callback=lambda current, total, progress, elapsed: progress_callback(
                 client,
                 message,
                 current,
                 total,
+                progress,
+                elapsed,
                 "Taking screenshot"
             )
         )
         
-        # Send the screenshot
-        await client.send_photo(
-            chat_id=user_id,
-            photo=output_path,
-            caption=f"✅ Screenshot at {timestamp}"
-        )
+        if screenshot_paths:
+            # Send the screenshot
+            await client.send_photo(
+                chat_id=user_id,
+                photo=screenshot_paths[0],
+                caption=f"✅ Screenshot at {timestamp}"
+            )
+        else:
+            await message.reply_text("❌ Failed to generate screenshot")
     except Exception as e:
-        await message.reply_text(f"❌ Error: {e}")
+        logger.error(f"Manual screenshot error: {e}")
+        await message.reply_text(f"❌ Error: {str(e)}")
     finally:
         # Clean up files
         if os.path.exists(file_path):
@@ -141,4 +159,4 @@ def screenshot_handler():
     return [
         CallbackQueryHandler(screenshot_callback, filters.regex("^screenshot_")),
         MessageHandler(screenshot_message, filters.text & filters.private & ~filters.command)
-      ]
+                ]
