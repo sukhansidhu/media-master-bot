@@ -15,4 +15,4 @@ COPY . .
 
 RUN mkdir -p /app/data && chmod -R 777 /app/data
 
-CMD ["python", "main.py"]
+CMD ["python3", "main.py"]
