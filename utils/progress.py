@@ -10,7 +10,8 @@ def human_readable_size(size: int) -> str:
         size /= 1024
     return f"{size:.2f} PB"
 
-async def progress_callback(client: Client, message: Message, current: int, total: int, progress: int, elapsed: float):
+async def progress_callback(client: Client, message: Message, current: int, total: int, 
+                          progress: int, elapsed: float, action: str):
     """Progress callback for uploads and processing"""
     # Update message every 5% or 5 seconds
     now = time.time()
@@ -27,13 +28,14 @@ async def progress_callback(client: Client, message: Message, current: int, tota
                 eta_str = "Calculating..."
             
             await message.edit_text(
-                f"🔄 **Processing**\n\n"
+                f"🔄 **{action}**\n\n"
                 f"Progress: {progress}%\n"
                 f"`{human_readable_size(current)} / {human_readable_size(total)}`\n"
                 f"{eta_str}"
             )
-        except:
-            pass
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Progress update error: {e}")
         
         progress_callback.last_update = now
         progress_callback.last_progress = progress
