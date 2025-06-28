@@ -101,7 +101,7 @@ def archiver_handler():
     """Return a list of handlers for archive functionality"""
     try:
         # FIXED: Proper filter syntax
-        password_filter = filters.text & filters.private & ~filters.command()
+        password_filter = filters.text & filters.private & ~filters.command("")
         
         return [
             CallbackQueryHandler(archiver_callback, filters.regex(r"^archiver_")),
