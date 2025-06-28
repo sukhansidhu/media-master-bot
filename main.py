@@ -83,8 +83,23 @@ async def handle_media(client: Client, message: Message):
     """Handle incoming media files and show processing options"""
     try:
         logger.info(f"Received media from {message.from_user.id} ({message.from_user.first_name})")
-        logger.info(f"Media type: {message.media}")
-        logger.info(f"File name: {message.document.file_name if message.document else 'N/A'}")
+        
+        # Get actual media type and file name
+        media_type = "unknown"
+        file_name = "N/A"
+        
+        if message.document:
+            media_type = "document"
+            file_name = message.document.file_name
+        elif message.video:
+            media_type = "video"
+            file_name = message.video.file_name
+        elif message.audio:
+            media_type = "audio"
+            file_name = message.audio.file_name
+        
+        logger.info(f"Media type: {media_type}")
+        logger.info(f"File name: {file_name}")
         
         user_id = message.from_user.id
         is_premium = False
@@ -101,13 +116,14 @@ async def handle_media(client: Client, message: Message):
         logger.error(f"Error handling media: {e}")
         logger.error(traceback.format_exc())
 
-# Additional debug handler
-@app.on_message(filters.all)
-async def debug_handler(client: Client, message: Message):
-    if message.from_user:
-        logger.debug(f"Received message from {message.from_user.id}: {message.text or message.caption or 'Media message'}")
-    else:
-        logger.debug(f"Received system message")
+# Debug handler to log callback queries
+@app.on_callback_query()
+async def debug_callback(client, callback_query):
+    try:
+        logger.info(f"Callback received: {callback_query.data} from {callback_query.from_user.id}")
+        await callback_query.answer("Processing...")
+    except Exception as e:
+        logger.error(f"Error in debug_callback: {e}")
 
 if __name__ == "__main__":
     # Create data directory if not exists
