@@ -158,5 +158,5 @@ async def screenshot_message(client, message: Message):
 def screenshot_handler():
     return [
         CallbackQueryHandler(screenshot_callback, filters.regex("^screenshot_")),
-        MessageHandler(screenshot_message, filters.text & filters.private & ~filters.command)
+        MessageHandler(screenshot_message, filters.text & filters.private)
     ]
