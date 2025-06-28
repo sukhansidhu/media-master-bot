@@ -14,7 +14,7 @@ def settings_markup():
             InlineKeyboardButton("📤 Upload Mode", callback_data="settings_upload_mode"),
             InlineKeyboardButton("🔄 Auto Rename", callback_data="settings_auto_rename")
         ],
-        [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+        [InlineKeyboardButton("🔙 Back", callback_data="start_back")]
     ])
 
 def get_media_options(message, is_premium=False):
@@ -34,14 +34,24 @@ def get_media_options(message, is_premium=False):
             [InlineKeyboardButton("🎵 Audio Tools", callback_data="audio_tools_options")],
             [InlineKeyboardButton("🔄 Convert Format", callback_data="converter_options")]
         ])
+    elif message.document:
+        buttons.extend([
+            [InlineKeyboardButton("📝 Rename File", callback_data="renamer_options")],
+            [InlineKeyboardButton("🗄️ Create Archive", callback_data="archiver_options")]
+        ])
     
     # Common buttons for all media types
-    buttons.extend([
+    common_buttons = [
         [InlineKeyboardButton("✏️ Edit Caption", callback_data="caption_editor_options")],
-        [InlineKeyboardButton("📝 Rename File", callback_data="renamer_options")],
         [InlineKeyboardButton("📊 Media Info", callback_data="media_info_options")],
         [InlineKeyboardButton("🗄️ Create Archive", callback_data="archiver_options")]
-    ])
+    ]
+    
+    # Only show Rename button if not already shown for documents
+    if not message.document:
+        common_buttons.insert(0, [InlineKeyboardButton("📝 Rename File", callback_data="renamer_options")])
+    
+    buttons.extend(common_buttons)
     
     return buttons
 
@@ -78,6 +88,9 @@ def format_markup(message):
         buttons.append([InlineKeyboardButton("MP3", callback_data="converter_format_mp3")])
         buttons.append([InlineKeyboardButton("WAV", callback_data="converter_format_wav")])
         buttons.append([InlineKeyboardButton("FLAC", callback_data="converter_format_flac")])
+    elif message.document:
+        buttons.append([InlineKeyboardButton("PDF", callback_data="converter_format_pdf")])
+        buttons.append([InlineKeyboardButton("DOCX", callback_data="converter_format_docx")])
     
     buttons.append([InlineKeyboardButton("🔙 Back", callback_data="media_options")])
     return InlineKeyboardMarkup(buttons)
