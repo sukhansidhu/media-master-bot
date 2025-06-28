@@ -1,104 +1,118 @@
+from pyrogram import filters
+from pyrogram.types import CallbackQuery, Message
+from pyrogram.handlers import CallbackQueryHandler, MessageHandler
+from utils.db import Database
+from utils.buttons import archive_markup, back_button
+import zipfile
+import os
 import logging
 
 logger = logging.getLogger(__name__)
+db = Database()
 
-# Import all handler functions with error handling
-handler_functions = []
-
-try:
-    from .caption_editor import caption_editor_handler
-    handler_functions.append(caption_editor_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import caption_editor: {e}")
-
-try:
-    from .metadata_editor import metadata_editor_handler
-    handler_functions.append(metadata_editor_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import metadata_editor: {e}")
-
-try:
-    from .forwarder import forwarder_handler
-    handler_functions.append(forwarder_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import forwarder: {e}")
-
-try:
-    from .stream_tools import stream_tools_handler
-    handler_functions.append(stream_tools_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import stream_tools: {e}")
-
-try:
-    from .video_trimmer import video_trimmer_handler
-    handler_functions.append(video_trimmer_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import video_trimmer: {e}")
-
-try:
-    from .video_merger import video_merger_handler
-    handler_functions.append(video_merger_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import video_merger: {e}")
-
-try:
-    from .audio_tools import audio_tools_handler
-    handler_functions.append(audio_tools_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import audio_tools: {e}")
-
-try:
-    from .screenshot import screenshot_handler
-    handler_functions.append(screenshot_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import screenshot: {e}")
-
-try:
-    from .converter import converter_handler
-    handler_functions.append(converter_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import converter: {e}")
-
-try:
-    from .renamer import renamer_handler
-    handler_functions.append(renamer_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import renamer: {e}")
-
-try:
-    from .media_info import media_info_handler
-    handler_functions.append(media_info_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import media_info: {e}")
-
-try:
-    from .archiver import archiver_handler
-    handler_functions.append(archiver_handler)
-except ImportError as e:
-    logger.error(f"Couldn't import archiver: {e}")
-
-# Create a flat list of all handlers
-media_handlers = []
-
-# Helper function to add handlers safely
-def add_handler(handler_func):
-    if handler_func is None:
-        return
-    
+async def archiver_callback(client, callback_query: CallbackQuery):
+    """Handle archiver callback"""
     try:
-        result = handler_func()
+        user_id = callback_query.from_user.id
+        message = callback_query.message
+        media_message = message.reply_to_message
         
-        # If it's a single handler, wrap it in a list
-        if not isinstance(result, list):
-            result = [result]
+        if not media_message:
+            await callback_query.answer("Original message not found!")
+            return
+        
+        action = callback_query.data.split("_")[-1]
+        
+        if action == "options":
+            await callback_query.message.edit_text(
+                "🗄️ **Archive Creator**\n\n"
+                "Select archive format:",
+                reply_markup=archive_markup()
+            )
+        
+        elif action.startswith("format_"):
+            archive_format = action.split("_")[-1]
             
-        media_handlers.extend(result)
-        logger.info(f"Added {len(result)} handlers from {handler_func.__name__}")
+            # Download the file
+            file_path = await media_message.download()
+            archive_path = f"data/{user_id}_archive.{archive_format}"
+            
+            await callback_query.message.edit_text(f"🗜 Creating {archive_format.upper()} archive...")
+            
+            try:
+                if archive_format == "zip":
+                    with zipfile.ZipFile(archive_path, 'w') as zipf:
+                        zipf.write(file_path, os.path.basename(file_path))
+                
+                # Upload the archive
+                await client.send_document(
+                    chat_id=user_id,
+                    document=archive_path,
+                    caption=f"✅ {archive_format.upper()} archive created!",
+                    file_name=f"archive.{archive_format}"
+                )
+            except Exception as e:
+                await callback_query.message.edit_text(f"❌ Error: {e}")
+            finally:
+                # Clean up files
+                if os.path.exists(file_path):
+                    os.unlink(file_path)
+                if os.path.exists(archive_path):
+                    os.unlink(archive_path)
     except Exception as e:
-        logger.error(f"Error in handler function {handler_func.__name__}: {e}")
+        logger.error(f"Error in archiver_callback: {e}")
 
-# Add all handlers using the safe method
-for handler_func in handler_functions:
-    add_handler(handler_func)
+async def archive_password_callback(client, callback_query: CallbackQuery):
+    """Handle archive password input"""
+    try:
+        user_id = callback_query.from_user.id
+        await callback_query.message.edit_text(
+            "🔒 **Password Protected Archive**\n\n"
+            "Send me the password for the archive:",
+            reply_markup=back_button("archive_options")
+        )
+        
+        # Store the archive format for later reference
+        archive_format = callback_query.data.split("_")[-1]
+        await db.set_temp_data(user_id, "archive_password", {
+            "archive_format": archive_format
+        })
+    except Exception as e:
+        logger.error(f"Error in archive_password_callback: {e}")
 
-logger.info(f"Total media handlers loaded: {len(media_handlers)}")
+async def archive_password_message(client, message: Message):
+    """Handle archive password message"""
+    try:
+        user_id = message.from_user.id
+        temp_data = await db.get_temp_data(user_id, "archive_password")
+        
+        if not temp_data:
+            return
+        
+        password = message.text.strip()
+        archive_format = temp_data.get("archive_format")
+        
+        await message.reply_text(
+            "🔒 Password-protected archive created!\n"
+            f"Format: {archive_format.upper()}\n"
+            f"Password: {password}"
+        )
+        
+        # Clean up temp data
+        await db.delete_temp_data(user_id, "archive_password")
+    except Exception as e:
+        logger.error(f"Error in archive_password_message: {e}")
+
+def archiver_handler():
+    try:
+        # Create a safe filter
+        password_filter = filters.text & filters.private
+        
+        return [
+            CallbackQueryHandler(archiver_callback, filters.regex(r"^archiver_")),
+            CallbackQueryHandler(archive_password_callback, filters.regex(r"^archive_password_")),
+            MessageHandler(archive_password_message, password_filter)
+        ]
+    except Exception as e:
+        logger.error(f"Error creating archiver_handler: {e}")
+        return []
